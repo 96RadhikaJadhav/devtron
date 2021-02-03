@@ -716,6 +716,22 @@
   version = "v1.11.3"
 
 [[projects]]
+  digest = "1:af105c7c5dc0b4ae41991f122cae860b9600f7d226072c2a83127048c991660c"
+  name = "github.com/hashicorp/go-cleanhttp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "eda1e5db218aad1db63ca4642c8906b26bcf2744"
+  version = "v0.5.1"
+
+[[projects]]
+  digest = "1:7f953ca68a29e4bfc27abb9a3760415bab2236c0b90aaf24e0d9b05d4a4020f0"
+  name = "github.com/hashicorp/go-retryablehttp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "991b9d0a42d13014e3689dd49a94c02be01f4237"
+  version = "v0.6.8"
+
+[[projects]]
   digest = "1:f14364057165381ea296e49f8870a9ffce2b8a95e34d6ae06c759106aaef428c"
   name = "github.com/hashicorp/go-uuid"
   packages = ["."]
@@ -1150,12 +1166,12 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:e362dddd08e6e894835074b6de49515939dbfb590c7198980639291bab62db4f"
+  digest = "1:536cf46a2e70f1dfe5d7e966a37253733a94a36a83c3ca4236c0e798a2985571"
   name = "github.com/xanzy/go-gitlab"
   packages = ["."]
   pruneopts = "UT"
-  revision = "be70cf752294cc5c6ee89a18d6ba0caca08aa5c7"
-  version = "v0.16.1"
+  revision = "f4a2048174c7c8bdb4de84f4dc275b47798cb11c"
+  version = "v0.42.0"
 
 [[projects]]
   digest = "1:172f94a6b3644a8f9e6b5e5b7fc9fe1e42d424f52a0300b2e7ab1e57db73f85d"

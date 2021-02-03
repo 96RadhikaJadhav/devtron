@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 )
 
 // ReleaseLinksService handles communication with the release link methods
@@ -31,12 +30,12 @@ type ListReleaseLinksOptions ListOptions
 // ListReleaseLinks gets assets as links from a Release.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/releases/links.html#get-links
-func (s *ReleaseLinksService) ListReleaseLinks(pid interface{}, tagName string, opt *ListReleaseLinksOptions, options ...OptionFunc) ([]*ReleaseLink, *Response, error) {
+func (s *ReleaseLinksService) ListReleaseLinks(pid interface{}, tagName string, opt *ListReleaseLinksOptions, options ...RequestOptionFunc) ([]*ReleaseLink, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases/%s/assets/links", url.QueryEscape(project), tagName)
+	u := fmt.Sprintf("projects/%s/releases/%s/assets/links", pathEscape(project), tagName)
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -55,13 +54,13 @@ func (s *ReleaseLinksService) ListReleaseLinks(pid interface{}, tagName string, 
 // GetReleaseLink returns a link from release assets.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/releases/links.html#get-a-link
-func (s *ReleaseLinksService) GetReleaseLink(pid interface{}, tagName string, link int, options ...OptionFunc) (*ReleaseLink, *Response, error) {
+func (s *ReleaseLinksService) GetReleaseLink(pid interface{}, tagName string, link int, options ...RequestOptionFunc) (*ReleaseLink, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/releases/%s/assets/links/%d",
-		url.QueryEscape(project),
+		pathEscape(project),
 		tagName,
 		link)
 
@@ -90,12 +89,12 @@ type CreateReleaseLinkOptions struct {
 // CreateReleaseLink creates a link.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/releases/links.html#create-a-link
-func (s *ReleaseLinksService) CreateReleaseLink(pid interface{}, tagName string, opt *CreateReleaseLinkOptions, options ...OptionFunc) (*ReleaseLink, *Response, error) {
+func (s *ReleaseLinksService) CreateReleaseLink(pid interface{}, tagName string, opt *CreateReleaseLinkOptions, options ...RequestOptionFunc) (*ReleaseLink, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases/%s/assets/links", url.QueryEscape(project), tagName)
+	u := fmt.Sprintf("projects/%s/releases/%s/assets/links", pathEscape(project), tagName)
 
 	req, err := s.client.NewRequest("POST", u, opt, options)
 	if err != nil {
@@ -124,13 +123,13 @@ type UpdateReleaseLinkOptions struct {
 // UpdateReleaseLink updates an asset link.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/releases/links.html#update-a-link
-func (s *ReleaseLinksService) UpdateReleaseLink(pid interface{}, tagName string, link int, opt *UpdateReleaseLinkOptions, options ...OptionFunc) (*ReleaseLink, *Response, error) {
+func (s *ReleaseLinksService) UpdateReleaseLink(pid interface{}, tagName string, link int, opt *UpdateReleaseLinkOptions, options ...RequestOptionFunc) (*ReleaseLink, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/releases/%s/assets/links/%d",
-		url.QueryEscape(project),
+		pathEscape(project),
 		tagName,
 		link)
 
@@ -151,13 +150,13 @@ func (s *ReleaseLinksService) UpdateReleaseLink(pid interface{}, tagName string,
 // DeleteReleaseLink deletes a link from release.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/releases/links.html#delete-a-link
-func (s *ReleaseLinksService) DeleteReleaseLink(pid interface{}, tagName string, link int, options ...OptionFunc) (*ReleaseLink, *Response, error) {
+func (s *ReleaseLinksService) DeleteReleaseLink(pid interface{}, tagName string, link int, options ...RequestOptionFunc) (*ReleaseLink, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/releases/%s/assets/links/%d",
-		url.QueryEscape(project),
+		pathEscape(project),
 		tagName,
 		link,
 	)

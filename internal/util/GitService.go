@@ -42,7 +42,7 @@ type GitClient interface {
 }
 
 type GitConfig struct {
-	GitlabGroupID  int                                                            //not null //local
+	GitlabGroupID      int                                                            //not null //local
 	GitlabGroupName    string `env:"GITLAB_GROUP_NAME" `                              //local
 	GitToken           string `env:"GIT_TOKEN" `                                      //not null  // public
 	GitUserName        string `env:"GIT_USERNAME" `                                   //not null  // public
@@ -74,19 +74,16 @@ type GitLabClient struct {
 
 func NewGitLabClient(config *GitConfig, logger *zap.SugaredLogger, gitService GitService) (GitClient, error) {
 	if config.GitProvider == "GITLAB" {
-		git := gitlab.NewClient(nil, config.GitToken)
+		baseUrl := ""
 		if len(config.GitHost) > 0 {
 			_, err := url.ParseRequestURI(config.GitHost)
 			if err != nil {
 				return nil, err
 			}
-			err = git.SetBaseURL(config.GitHost)
-			if err != nil {
-				return nil, err
-			}
+			baseUrl = config.GitHost
 		}
+		git, err := gitlab.NewClient(config.GitToken, gitlab.WithBaseURL(baseUrl))
 		groups, res, err := git.Groups.SearchGroup(config.GitlabGroupName)
-
 		if err != nil {
 			responseStatus := 0
 			if res != nil {
@@ -105,6 +102,10 @@ func NewGitLabClient(config *GitConfig, logger *zap.SugaredLogger, gitService Gi
 			}
 		}
 		logger.Debugw("gitlab config", "config", config)
+
+		g, res, err := git.Groups.GetGroup(10133460, nil)
+		logger.Infow("gitlab config >>>>>", "g", g, "res", res, "err", err)
+
 		return &GitLabClient{
 			client:     git,
 			config:     config,
@@ -253,10 +254,13 @@ func (impl GitLabClient) GetRepoUrl(projectName string) (repoUrl string, err err
 }
 
 func (impl GitLabClient) createReadme(namespace, projectName string) (res interface{}, err error) {
+	filepath := "README.md"
+	fileAction := gitlab.FileCreate
+	content := "devtron licence"
 	actions := &gitlab.CreateCommitOptions{
 		Branch:        gitlab.String("master"),
 		CommitMessage: gitlab.String("test commit"),
-		Actions:       []*gitlab.CommitAction{{Action: gitlab.FileCreate, FilePath: "README.md", Content: "devtron licence"}},
+		Actions:       []*gitlab.CommitActionOptions{{Action: &fileAction, FilePath: &filepath, Content: &content}},
 	}
 	c, _, err := impl.client.Commits.CreateCommit(fmt.Sprintf("%s/%s", namespace, projectName), actions)
 	return c, err
@@ -279,7 +283,7 @@ func (impl GitLabClient) CommitValues(config *ChartConfig) (commitHash string, e
 	actions := &gitlab.CreateCommitOptions{
 		Branch:        &branch,
 		CommitMessage: gitlab.String(config.ReleaseMessage),
-		Actions:       []*gitlab.CommitAction{{Action: fileAction, FilePath: path, Content: config.FileContent}},
+		Actions:       []*gitlab.CommitActionOptions{{Action: &fileAction, FilePath: &path, Content: &config.FileContent}},
 	}
 	c, _, err := impl.client.Commits.CreateCommit(fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, config.ChartName), actions)
 	if err != nil {

@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 )
 
 // GroupBadgesService handles communication with the group badges
@@ -45,12 +44,12 @@ type ListGroupBadgesOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#list-all-badges-of-a-group
-func (s *GroupBadgesService) ListGroupBadges(gid interface{}, opt *ListGroupBadgesOptions, options ...OptionFunc) ([]*GroupBadge, *Response, error) {
+func (s *GroupBadgesService) ListGroupBadges(gid interface{}, opt *ListGroupBadgesOptions, options ...RequestOptionFunc) ([]*GroupBadge, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/badges", pathEscape(group))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -70,12 +69,12 @@ func (s *GroupBadgesService) ListGroupBadges(gid interface{}, opt *ListGroupBadg
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#get-a-badge-of-a-group
-func (s *GroupBadgesService) GetGroupBadge(gid interface{}, badge int, options ...OptionFunc) (*GroupBadge, *Response, error) {
+func (s *GroupBadgesService) GetGroupBadge(gid interface{}, badge int, options ...RequestOptionFunc) (*GroupBadge, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges/%d", url.QueryEscape(group), badge)
+	u := fmt.Sprintf("groups/%s/badges/%d", pathEscape(group), badge)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -104,12 +103,12 @@ type AddGroupBadgeOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#add-a-badge-to-a-group
-func (s *GroupBadgesService) AddGroupBadge(gid interface{}, opt *AddGroupBadgeOptions, options ...OptionFunc) (*GroupBadge, *Response, error) {
+func (s *GroupBadgesService) AddGroupBadge(gid interface{}, opt *AddGroupBadgeOptions, options ...RequestOptionFunc) (*GroupBadge, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/badges", pathEscape(group))
 
 	req, err := s.client.NewRequest("POST", u, opt, options)
 	if err != nil {
@@ -138,12 +137,12 @@ type EditGroupBadgeOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#edit-a-badge-of-a-group
-func (s *GroupBadgesService) EditGroupBadge(gid interface{}, badge int, opt *EditGroupBadgeOptions, options ...OptionFunc) (*GroupBadge, *Response, error) {
+func (s *GroupBadgesService) EditGroupBadge(gid interface{}, badge int, opt *EditGroupBadgeOptions, options ...RequestOptionFunc) (*GroupBadge, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges/%d", url.QueryEscape(group), badge)
+	u := fmt.Sprintf("groups/%s/badges/%d", pathEscape(group), badge)
 
 	req, err := s.client.NewRequest("PUT", u, opt, options)
 	if err != nil {
@@ -163,12 +162,12 @@ func (s *GroupBadgesService) EditGroupBadge(gid interface{}, badge int, opt *Edi
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#remove-a-badge-from-a-group
-func (s *GroupBadgesService) DeleteGroupBadge(gid interface{}, badge int, options ...OptionFunc) (*Response, error) {
+func (s *GroupBadgesService) DeleteGroupBadge(gid interface{}, badge int, options ...RequestOptionFunc) (*Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges/%d", url.QueryEscape(group), badge)
+	u := fmt.Sprintf("groups/%s/badges/%d", pathEscape(group), badge)
 
 	req, err := s.client.NewRequest("DELETE", u, nil, options)
 	if err != nil {
@@ -192,12 +191,12 @@ type GroupBadgePreviewOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_badges.html#preview-a-badge-from-a-group
-func (s *GroupBadgesService) PreviewGroupBadge(gid interface{}, opt *GroupBadgePreviewOptions, options ...OptionFunc) (*GroupBadge, *Response, error) {
+func (s *GroupBadgesService) PreviewGroupBadge(gid interface{}, opt *GroupBadgePreviewOptions, options ...RequestOptionFunc) (*GroupBadge, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/badges/render", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/badges/render", pathEscape(group))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {

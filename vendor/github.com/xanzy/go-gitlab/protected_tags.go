@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 )
 
 // ProtectedTagsService handles communication with the protected tag methods
@@ -43,12 +42,12 @@ type ListProtectedTagsOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/protected_tags.html#list-protected-tags
-func (s *ProtectedTagsService) ListProtectedTags(pid interface{}, opt *ListProtectedTagsOptions, options ...OptionFunc) ([]*ProtectedTag, *Response, error) {
+func (s *ProtectedTagsService) ListProtectedTags(pid interface{}, opt *ListProtectedTagsOptions, options ...RequestOptionFunc) ([]*ProtectedTag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/protected_tags", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/protected_tags", pathEscape(project))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -68,12 +67,12 @@ func (s *ProtectedTagsService) ListProtectedTags(pid interface{}, opt *ListProte
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/protected_tags.html#get-a-single-protected-tag-or-wildcard-protected-tag
-func (s *ProtectedTagsService) GetProtectedTag(pid interface{}, tag string, options ...OptionFunc) (*ProtectedTag, *Response, error) {
+func (s *ProtectedTagsService) GetProtectedTag(pid interface{}, tag string, options ...RequestOptionFunc) (*ProtectedTag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/protected_tags/%s", url.QueryEscape(project), tag)
+	u := fmt.Sprintf("projects/%s/protected_tags/%s", pathEscape(project), pathEscape(tag))
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -104,12 +103,12 @@ type ProtectRepositoryTagsOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/protected_tags.html#protect-repository-tags
-func (s *ProtectedTagsService) ProtectRepositoryTags(pid interface{}, opt *ProtectRepositoryTagsOptions, options ...OptionFunc) (*ProtectedTag, *Response, error) {
+func (s *ProtectedTagsService) ProtectRepositoryTags(pid interface{}, opt *ProtectRepositoryTagsOptions, options ...RequestOptionFunc) (*ProtectedTag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/protected_tags", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/protected_tags", pathEscape(project))
 
 	req, err := s.client.NewRequest("POST", u, opt, options)
 	if err != nil {
@@ -130,12 +129,12 @@ func (s *ProtectedTagsService) ProtectRepositoryTags(pid interface{}, opt *Prote
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/protected_tags.html#unprotect-repository-tags
-func (s *ProtectedTagsService) UnprotectRepositoryTags(pid interface{}, tag string, options ...OptionFunc) (*Response, error) {
+func (s *ProtectedTagsService) UnprotectRepositoryTags(pid interface{}, tag string, options ...RequestOptionFunc) (*Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("projects/%s/protected_tags/%s", url.QueryEscape(project), tag)
+	u := fmt.Sprintf("projects/%s/protected_tags/%s", pathEscape(project), pathEscape(tag))
 
 	req, err := s.client.NewRequest("DELETE", u, nil, options)
 	if err != nil {

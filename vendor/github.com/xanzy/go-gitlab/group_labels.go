@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 )
 
 // GroupLabelsService handles communication with the label related methods of the
@@ -31,12 +30,12 @@ type ListGroupLabelsOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/group_labels.html#list-group-labels
-func (s *GroupLabelsService) ListGroupLabels(gid interface{}, opt *ListGroupLabelsOptions, options ...OptionFunc) ([]*GroupLabel, *Response, error) {
+func (s *GroupLabelsService) ListGroupLabels(gid interface{}, opt *ListGroupLabelsOptions, options ...RequestOptionFunc) ([]*GroupLabel, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/labels", pathEscape(group))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -44,6 +43,35 @@ func (s *GroupLabelsService) ListGroupLabels(gid interface{}, opt *ListGroupLabe
 	}
 
 	var l []*GroupLabel
+	resp, err := s.client.Do(req, &l)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return l, resp, err
+}
+
+// GetGroupLabel get a single label for a given group.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/group_labels.html#get-a-single-group-label
+func (s *GroupLabelsService) GetGroupLabel(gid interface{}, labelID interface{}, options ...RequestOptionFunc) (*GroupLabel, *Response, error) {
+	group, err := parseID(gid)
+	if err != nil {
+		return nil, nil, err
+	}
+	label, err := parseID(labelID)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("groups/%s/labels/%s", pathEscape(group), label)
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var l *GroupLabel
 	resp, err := s.client.Do(req, &l)
 	if err != nil {
 		return nil, resp, err
@@ -63,12 +91,12 @@ type CreateGroupLabelOptions CreateLabelOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/group_labels.html#create-a-new-group-label
-func (s *GroupLabelsService) CreateGroupLabel(gid interface{}, opt *CreateGroupLabelOptions, options ...OptionFunc) (*GroupLabel, *Response, error) {
+func (s *GroupLabelsService) CreateGroupLabel(gid interface{}, opt *CreateGroupLabelOptions, options ...RequestOptionFunc) (*GroupLabel, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/labels", pathEscape(group))
 
 	req, err := s.client.NewRequest("POST", u, opt, options)
 	if err != nil {
@@ -93,12 +121,12 @@ type DeleteGroupLabelOptions DeleteLabelOptions
 // DeleteGroupLabel deletes a group label given by its name.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/labels.html#delete-a-label
-func (s *GroupLabelsService) DeleteGroupLabel(gid interface{}, opt *DeleteGroupLabelOptions, options ...OptionFunc) (*Response, error) {
+func (s *GroupLabelsService) DeleteGroupLabel(gid interface{}, opt *DeleteGroupLabelOptions, options ...RequestOptionFunc) (*Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/labels", pathEscape(group))
 
 	req, err := s.client.NewRequest("DELETE", u, opt, options)
 	if err != nil {
@@ -119,12 +147,12 @@ type UpdateGroupLabelOptions UpdateLabelOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/group_labels.html#update-a-group-label
-func (s *GroupLabelsService) UpdateGroupLabel(gid interface{}, opt *UpdateGroupLabelOptions, options ...OptionFunc) (*GroupLabel, *Response, error) {
+func (s *GroupLabelsService) UpdateGroupLabel(gid interface{}, opt *UpdateGroupLabelOptions, options ...RequestOptionFunc) (*GroupLabel, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels", url.QueryEscape(group))
+	u := fmt.Sprintf("groups/%s/labels", pathEscape(group))
 
 	req, err := s.client.NewRequest("PUT", u, opt, options)
 	if err != nil {
@@ -146,7 +174,7 @@ func (s *GroupLabelsService) UpdateGroupLabel(gid interface{}, opt *UpdateGroupL
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/group_labels.html#subscribe-to-a-group-label
-func (s *GroupLabelsService) SubscribeToGroupLabel(gid interface{}, labelID interface{}, options ...OptionFunc) (*GroupLabel, *Response, error) {
+func (s *GroupLabelsService) SubscribeToGroupLabel(gid interface{}, labelID interface{}, options ...RequestOptionFunc) (*GroupLabel, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
@@ -155,7 +183,7 @@ func (s *GroupLabelsService) SubscribeToGroupLabel(gid interface{}, labelID inte
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels/%s/subscribe", url.QueryEscape(group), label)
+	u := fmt.Sprintf("groups/%s/labels/%s/subscribe", pathEscape(group), label)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -177,7 +205,7 @@ func (s *GroupLabelsService) SubscribeToGroupLabel(gid interface{}, labelID inte
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/group_labels.html#unsubscribe-from-a-group-label
-func (s *GroupLabelsService) UnsubscribeFromGroupLabel(gid interface{}, labelID interface{}, options ...OptionFunc) (*Response, error) {
+func (s *GroupLabelsService) UnsubscribeFromGroupLabel(gid interface{}, labelID interface{}, options ...RequestOptionFunc) (*Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, err
@@ -186,7 +214,7 @@ func (s *GroupLabelsService) UnsubscribeFromGroupLabel(gid interface{}, labelID 
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("groups/%s/labels/%s/unsubscribe", url.QueryEscape(group), label)
+	u := fmt.Sprintf("groups/%s/labels/%s/unsubscribe", pathEscape(group), label)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {

@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 )
 
@@ -53,12 +52,12 @@ type ListReleasesOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#list-releases
-func (s *ReleasesService) ListReleases(pid interface{}, opt *ListReleasesOptions, options ...OptionFunc) ([]*Release, *Response, error) {
+func (s *ReleasesService) ListReleases(pid interface{}, opt *ListReleasesOptions, options ...RequestOptionFunc) ([]*Release, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/releases", pathEscape(project))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -78,12 +77,12 @@ func (s *ReleasesService) ListReleases(pid interface{}, opt *ListReleasesOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#get-a-release-by-a-tag-name
-func (s *ReleasesService) GetRelease(pid interface{}, tagName string, options ...OptionFunc) (*Release, *Response, error) {
+func (s *ReleasesService) GetRelease(pid interface{}, tagName string, options ...RequestOptionFunc) (*Release, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases/%s", url.QueryEscape(project), tagName)
+	u := fmt.Sprintf("projects/%s/releases/%s", pathEscape(project), tagName)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -125,19 +124,21 @@ type CreateReleaseOptions struct {
 	TagName     *string        `url:"tag_name" json:"tag_name"`
 	Description *string        `url:"description" json:"description"`
 	Ref         *string        `url:"ref,omitempty" json:"ref,omitempty"`
+	Milestones  []string       `url:"milestones,omitempty" json:"milestones,omitempty"`
 	Assets      *ReleaseAssets `url:"assets,omitempty" json:"assets,omitempty"`
+	ReleasedAt  *time.Time     `url:"released_at,omitempty" json:"released_at,omitempty"`
 }
 
 // CreateRelease creates a release.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#create-a-release
-func (s *ReleasesService) CreateRelease(pid interface{}, opts *CreateReleaseOptions, options ...OptionFunc) (*Release, *Response, error) {
+func (s *ReleasesService) CreateRelease(pid interface{}, opts *CreateReleaseOptions, options ...RequestOptionFunc) (*Release, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/releases", pathEscape(project))
 
 	req, err := s.client.NewRequest("POST", u, opts, options)
 	if err != nil {
@@ -158,20 +159,22 @@ func (s *ReleasesService) CreateRelease(pid interface{}, opts *CreateReleaseOpti
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#update-a-release
 type UpdateReleaseOptions struct {
-	Name        *string `url:"name" json:"name"`
-	Description *string `url:"description" json:"description"`
+	Name        *string    `url:"name" json:"name"`
+	Description *string    `url:"description" json:"description"`
+	Milestones  []string   `url:"milestones,omitempty" json:"milestones,omitempty"`
+	ReleasedAt  *time.Time `url:"released_at,omitempty" json:"released_at,omitempty"`
 }
 
 // UpdateRelease updates a release.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#update-a-release
-func (s *ReleasesService) UpdateRelease(pid interface{}, tagName string, opts *UpdateReleaseOptions, options ...OptionFunc) (*Release, *Response, error) {
+func (s *ReleasesService) UpdateRelease(pid interface{}, tagName string, opts *UpdateReleaseOptions, options ...RequestOptionFunc) (*Release, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases/%s", url.QueryEscape(project), tagName)
+	u := fmt.Sprintf("projects/%s/releases/%s", pathEscape(project), tagName)
 
 	req, err := s.client.NewRequest("PUT", u, opts, options)
 	if err != nil {
@@ -191,12 +194,12 @@ func (s *ReleasesService) UpdateRelease(pid interface{}, tagName string, opts *U
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/releases/index.html#delete-a-release
-func (s *ReleasesService) DeleteRelease(pid interface{}, tagName string, options ...OptionFunc) (*Release, *Response, error) {
+func (s *ReleasesService) DeleteRelease(pid interface{}, tagName string, options ...RequestOptionFunc) (*Release, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/releases/%s", url.QueryEscape(project), tagName)
+	u := fmt.Sprintf("projects/%s/releases/%s", pathEscape(project), tagName)
 
 	req, err := s.client.NewRequest("DELETE", u, nil, options)
 	if err != nil {

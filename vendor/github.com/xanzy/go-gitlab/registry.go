@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 )
 
@@ -58,12 +57,12 @@ type ListRegistryRepositoriesOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#list-registry-repositories
-func (s *ContainerRegistryService) ListRegistryRepositories(pid interface{}, opt *ListRegistryRepositoriesOptions, options ...OptionFunc) ([]*RegistryRepository, *Response, error) {
+func (s *ContainerRegistryService) ListRegistryRepositories(pid interface{}, opt *ListRegistryRepositoriesOptions, options ...RequestOptionFunc) ([]*RegistryRepository, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/registry/repositories", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/registry/repositories", pathEscape(project))
 
 	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
@@ -83,12 +82,12 @@ func (s *ContainerRegistryService) ListRegistryRepositories(pid interface{}, opt
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#delete-registry-repository
-func (s *ContainerRegistryService) DeleteRegistryRepository(pid interface{}, repository int, options ...OptionFunc) (*Response, error) {
+func (s *ContainerRegistryService) DeleteRegistryRepository(pid interface{}, repository int, options ...RequestOptionFunc) (*Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d", url.QueryEscape(project), repository)
+	u := fmt.Sprintf("projects/%s/registry/repositories/%d", pathEscape(project), repository)
 
 	req, err := s.client.NewRequest("DELETE", u, nil, options)
 	if err != nil {
@@ -109,13 +108,13 @@ type ListRegistryRepositoryTagsOptions ListOptions
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#list-repository-tags
-func (s *ContainerRegistryService) ListRegistryRepositoryTags(pid interface{}, repository int, opt *ListRegistryRepositoryTagsOptions, options ...OptionFunc) ([]*RegistryRepositoryTag, *Response, error) {
+func (s *ContainerRegistryService) ListRegistryRepositoryTags(pid interface{}, repository int, opt *ListRegistryRepositoryTagsOptions, options ...RequestOptionFunc) ([]*RegistryRepositoryTag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags",
-		url.QueryEscape(project),
+		pathEscape(project),
 		repository,
 	)
 
@@ -137,13 +136,13 @@ func (s *ContainerRegistryService) ListRegistryRepositoryTags(pid interface{}, r
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#get-details-of-a-repository-tag
-func (s *ContainerRegistryService) GetRegistryRepositoryTagDetail(pid interface{}, repository int, tagName string, options ...OptionFunc) (*RegistryRepositoryTag, *Response, error) {
+func (s *ContainerRegistryService) GetRegistryRepositoryTagDetail(pid interface{}, repository int, tagName string, options ...RequestOptionFunc) (*RegistryRepositoryTag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags/%s",
-		url.QueryEscape(project),
+		pathEscape(project),
 		repository,
 		tagName,
 	)
@@ -166,13 +165,13 @@ func (s *ContainerRegistryService) GetRegistryRepositoryTagDetail(pid interface{
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#delete-a-repository-tag
-func (s *ContainerRegistryService) DeleteRegistryRepositoryTag(pid interface{}, repository int, tagName string, options ...OptionFunc) (*Response, error) {
+func (s *ContainerRegistryService) DeleteRegistryRepositoryTag(pid interface{}, repository int, tagName string, options ...RequestOptionFunc) (*Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, err
 	}
 	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags/%s",
-		url.QueryEscape(project),
+		pathEscape(project),
 		repository,
 		tagName,
 	)
@@ -191,9 +190,13 @@ func (s *ContainerRegistryService) DeleteRegistryRepositoryTag(pid interface{}, 
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#delete-repository-tags-in-bulk
 type DeleteRegistryRepositoryTagsOptions struct {
+	NameRegexpDelete *string `url:"name_regex_delete,omitempty" json:"name_regex_delete,omitempty"`
+	NameRegexpKeep   *string `url:"name_regex_keep,omitempty" json:"name_regex_keep,omitempty"`
+	KeepN            *int    `url:"keep_n,omitempty" json:"keep_n,omitempty"`
+	OlderThan        *string `url:"older_than,omitempty" json:"older_than,omitempty"`
+
+	// Deprecated members
 	NameRegexp *string `url:"name_regex,omitempty" json:"name_regex,omitempty"`
-	KeepN      *int    `url:"keep_n,omitempty" json:"keep_n,omitempty"`
-	OlderThan  *string `url:"older_than,omitempty" json:"older_than,omitempty"`
 }
 
 // DeleteRegistryRepositoryTags deletes repository tags in bulk based on
@@ -201,13 +204,13 @@ type DeleteRegistryRepositoryTagsOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/container_registry.html#delete-repository-tags-in-bulk
-func (s *ContainerRegistryService) DeleteRegistryRepositoryTags(pid interface{}, repository int, opt *DeleteRegistryRepositoryTagsOptions, options ...OptionFunc) (*Response, error) {
+func (s *ContainerRegistryService) DeleteRegistryRepositoryTags(pid interface{}, repository int, opt *DeleteRegistryRepositoryTagsOptions, options ...RequestOptionFunc) (*Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, err
 	}
 	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags",
-		url.QueryEscape(project),
+		pathEscape(project),
 		repository,
 	)
 
