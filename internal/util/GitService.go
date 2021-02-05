@@ -239,6 +239,7 @@ func (impl GitLabClient) ensureProjectAvailabilityOnSsh(projectName string, repo
 
 func (impl GitLabClient) GetRepoUrl(projectName string) (repoUrl string, err error) {
 	pid := fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, projectName)
+	pid = url.PathEscape(pid)
 	prop, res, err := impl.client.Projects.GetProject(pid, &gitlab.GetProjectOptions{})
 	if err != nil {
 		impl.logger.Debugw("get project err", "pod", pid, "err", err)
