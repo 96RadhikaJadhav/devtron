@@ -34,7 +34,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path/filepath"
-	"strconv"
 	"time"
 )
 
@@ -90,7 +89,7 @@ func NewGitFactory(logger *zap.SugaredLogger, gitOpsRepository repository.GitOps
 
 type GitConfig struct {
 	GitlabGroupId      string `env:"GITLAB_GROUP_ID" `                                //local
-	GitlabGroupName    string `env:"GITLAB_GROUP_NAME" `                              //local
+	GitlabGroupName    string                                                         //local
 	GitToken           string `env:"GIT_TOKEN" `                                      //not null  // public
 	GitUserName        string `env:"GIT_USERNAME" `                                   //not null  // public
 	GitWorkingDir      string `env:"GIT_WORKING_DIRECTORY" envDefault:"/tmp/gitops/"` //working directory for git. might use pvc
@@ -171,7 +170,7 @@ func NewGitLabClient(config *GitConfig, logger *zap.SugaredLogger, gitService Gi
 			return nil, err
 		}
 		if group != nil {
-			config.GitlabGroupName = group.Name
+			config.GitlabGroupName = group.FullPath
 		}
 		logger.Debugw("gitlab config", "config", config)
 		return &GitLabClient{
@@ -254,11 +253,11 @@ func (impl GitLabClient) createProject(name, description string) (url string, er
 			}
 		}
 	*/
-	var namespace = impl.config.GitlabGroupId
+	/*var namespace = impl.config.GitlabGroupId
 	namespaceId, err := strconv.Atoi(namespace)
 	if err != nil {
 		return "", err
-	}
+	}*/
 
 	// Create new project
 	p := &gitlab.CreateProjectOptions{
@@ -267,7 +266,7 @@ func (impl GitLabClient) createProject(name, description string) (url string, er
 		MergeRequestsEnabled: gitlab.Bool(true),
 		SnippetsEnabled:      gitlab.Bool(false),
 		Visibility:           gitlab.Visibility(gitlab.PrivateVisibility),
-		NamespaceID:          &namespaceId,
+		Path:                 &impl.config.GitlabGroupName,
 	}
 	project, _, err := impl.client.Projects.CreateProject(p)
 	if err != nil {
