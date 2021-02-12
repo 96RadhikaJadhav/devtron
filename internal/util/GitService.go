@@ -34,6 +34,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -89,7 +90,7 @@ func NewGitFactory(logger *zap.SugaredLogger, gitOpsRepository repository.GitOps
 
 type GitConfig struct {
 	GitlabGroupId      string `env:"GITLAB_GROUP_ID" `                                //local
-	GitlabGroupName    string                                                         //local
+	GitlabGroupPath    string                                                         //local
 	GitToken           string `env:"GIT_TOKEN" `                                      //not null  // public
 	GitUserName        string `env:"GIT_USERNAME" `                                   //not null  // public
 	GitWorkingDir      string `env:"GIT_WORKING_DIRECTORY" envDefault:"/tmp/gitops/"` //working directory for git. might use pvc
@@ -170,7 +171,7 @@ func NewGitLabClient(config *GitConfig, logger *zap.SugaredLogger, gitService Gi
 			return nil, err
 		}
 		if group != nil {
-			config.GitlabGroupName = group.FullPath
+			config.GitlabGroupPath = group.FullPath
 		}
 		logger.Debugw("gitlab config", "config", config)
 		return &GitLabClient{
@@ -209,7 +210,7 @@ func (impl GitLabClient) CreateRepository(name, description string) (url string,
 	if !validated {
 		return "", true, fmt.Errorf("unable to validate project:%s  in given time", name)
 	}
-	_, err = impl.createReadme(impl.config.GitlabGroupName, name)
+	_, err = impl.createReadme(impl.config.GitlabGroupPath, name)
 	if err != nil {
 		impl.logger.Errorw("error in creating readme ", "project", name, "err", err)
 		return "", true, err
@@ -227,37 +228,15 @@ func (impl GitLabClient) CreateRepository(name, description string) (url string,
 
 func (impl GitLabClient) DeleteProject(projectName string) (err error) {
 	impl.logger.Infow("deleting project ", "name", projectName)
-	_, err = impl.client.Projects.DeleteProject(fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, projectName))
+	_, err = impl.client.Projects.DeleteProject(fmt.Sprintf("%s/%s", impl.config.GitlabGroupPath, projectName))
 	return err
 }
 func (impl GitLabClient) createProject(name, description string) (url string, err error) {
-	/*
-		if impl.config.GitlabNamespaceID == 0 {
-
-			//coming soon
-
-			groups, res, err := impl.client.Groups.SearchGroup(impl.config.GitlabNamespaceName)
-			if err != nil {
-				// comming soon just dial up
-				logger.Errorw("error connecting to gitlab", "status code", res.StatusCode, "err", err.Error())
-				return "", err
-			}
-			if len(groups) == 0 {
-				logger.Errorw("no matching namespace found for gitlab")
-				return "", err
-			}
-			for _, group := range groups {
-				if impl.config.GitlabNamespaceName == group.Name {
-					impl.config.GitlabNamespaceID = group.ID
-				}
-			}
-		}
-	*/
-	/*var namespace = impl.config.GitlabGroupId
+	var namespace = impl.config.GitlabGroupId
 	namespaceId, err := strconv.Atoi(namespace)
 	if err != nil {
 		return "", err
-	}*/
+	}
 
 	// Create new project
 	p := &gitlab.CreateProjectOptions{
@@ -266,7 +245,7 @@ func (impl GitLabClient) createProject(name, description string) (url string, er
 		MergeRequestsEnabled: gitlab.Bool(true),
 		SnippetsEnabled:      gitlab.Bool(false),
 		Visibility:           gitlab.Visibility(gitlab.PrivateVisibility),
-		Path:                 &impl.config.GitlabGroupName,
+		NamespaceID:          &namespaceId,
 	}
 	project, _, err := impl.client.Projects.CreateProject(p)
 	if err != nil {
@@ -278,7 +257,7 @@ func (impl GitLabClient) createProject(name, description string) (url string, er
 }
 
 func (impl GitLabClient) ensureProjectAvailability(projectName string) (bool, error) {
-	pid := fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, projectName)
+	pid := fmt.Sprintf("%s/%s", impl.config.GitlabGroupPath, projectName)
 	count := 0
 	verified := false
 	for count < 3 && !verified {
@@ -314,7 +293,7 @@ func (impl GitLabClient) ensureProjectAvailabilityOnSsh(projectName string, repo
 }
 
 func (impl GitLabClient) GetRepoUrl(projectName string) (repoUrl string, err error) {
-	pid := fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, projectName)
+	pid := fmt.Sprintf("%s/%s", impl.config.GitlabGroupPath, projectName)
 	prop, res, err := impl.client.Projects.GetProject(pid, &gitlab.GetProjectOptions{})
 	if err != nil {
 		impl.logger.Debugw("get project err", "pod", pid, "err", err)
@@ -339,7 +318,7 @@ func (impl GitLabClient) createReadme(namespace, projectName string) (res interf
 	return c, err
 }
 func (impl GitLabClient) checkIfFileExists(projectName, ref, file string) (exists bool, err error) {
-	_, _, err = impl.client.RepositoryFiles.GetFileMetaData(fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, projectName), file, &gitlab.GetFileMetaDataOptions{Ref: &ref})
+	_, _, err = impl.client.RepositoryFiles.GetFileMetaData(fmt.Sprintf("%s/%s", impl.config.GitlabGroupPath, projectName), file, &gitlab.GetFileMetaDataOptions{Ref: &ref})
 	return err == nil, err
 }
 
@@ -358,7 +337,7 @@ func (impl GitLabClient) CommitValues(config *ChartConfig) (commitHash string, e
 		CommitMessage: gitlab.String(config.ReleaseMessage),
 		Actions:       []*gitlab.CommitAction{{Action: fileAction, FilePath: path, Content: config.FileContent}},
 	}
-	c, _, err := impl.client.Commits.CreateCommit(fmt.Sprintf("%s/%s", impl.config.GitlabGroupName, config.ChartName), actions)
+	c, _, err := impl.client.Commits.CreateCommit(fmt.Sprintf("%s/%s", impl.config.GitlabGroupPath, config.ChartName), actions)
 	if err != nil {
 		return "", err
 	}
