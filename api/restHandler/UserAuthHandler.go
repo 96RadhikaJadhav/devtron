@@ -67,6 +67,12 @@ type UserAuthHandler interface {
 	GetAllSSOLoginConfig(w http.ResponseWriter, r *http.Request)
 	GetSSOLoginConfig(w http.ResponseWriter, r *http.Request)
 	GetSSOLoginConfigByName(w http.ResponseWriter, r *http.Request)
+
+
+	CreateHostUrl(w http.ResponseWriter, r *http.Request)
+	UpdateHostUrl(w http.ResponseWriter, r *http.Request)
+	GetHostUrlById(w http.ResponseWriter, r *http.Request)
+	GetHostUrlActive(w http.ResponseWriter, r *http.Request)
 }
 
 type UserAuthHandlerImpl struct {
@@ -77,15 +83,16 @@ type UserAuthHandlerImpl struct {
 	natsClient      *pubsub.PubSubClient
 	userService     user.UserService
 	ssoLoginService sso.SSOLoginService
+	hostUrlService  sso.HostUrlService
 }
 
 const POLICY_UPDATE_TOPIC = "Policy.Update"
 
 func NewUserAuthHandlerImpl(userAuthService user.UserAuthService, validator *validator.Validate,
 	logger *zap.SugaredLogger, enforcer rbac.Enforcer, natsClient *pubsub.PubSubClient, userService user.UserService,
-	ssoLoginService sso.SSOLoginService) *UserAuthHandlerImpl {
+	ssoLoginService sso.SSOLoginService, hostUrlService sso.HostUrlService) *UserAuthHandlerImpl {
 	userAuthHandler := &UserAuthHandlerImpl{userAuthService: userAuthService, validator: validator, logger: logger,
-		enforcer: enforcer, natsClient: natsClient, userService: userService, ssoLoginService: ssoLoginService}
+		enforcer: enforcer, natsClient: natsClient, userService: userService, ssoLoginService: ssoLoginService, hostUrlService: hostUrlService}
 
 	err := userAuthHandler.Subscribe()
 	if err != nil {
@@ -637,6 +644,144 @@ func (handler UserAuthHandlerImpl) GetSSOLoginConfigByName(w http.ResponseWriter
 	res, err := handler.ssoLoginService.GetByName(name)
 	if err != nil {
 		handler.logger.Errorw("service err, GetSSOLoginConfigByName", "err", err)
+		writeJsonResp(w, err, nil, http.StatusInternalServerError)
+		return
+	}
+	writeJsonResp(w, nil, res, http.StatusOK)
+}
+
+func (handler UserAuthHandlerImpl) CreateHostUrl(w http.ResponseWriter, r *http.Request) {
+	userId, err := handler.userService.GetLoggedInUser(r)
+	if userId == 0 || err != nil {
+		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var dto sso.HostUrlDto
+	err = decoder.Decode(&dto)
+	if err != nil {
+		handler.logger.Errorw("request err, CreateHostUrl", "err", err, "payload", dto)
+		writeJsonResp(w, err, nil, http.StatusBadRequest)
+		return
+	}
+
+	isActionUserSuperAdmin, err := handler.userService.IsSuperAdmin(int(userId))
+	if err != nil {
+		handler.logger.Errorw("request err, CreateHostUrl", "err", err, "userId", userId)
+		writeJsonResp(w, err, "Failed to check is super admin", http.StatusInternalServerError)
+		return
+	}
+
+	if !isActionUserSuperAdmin {
+		err = &util.ApiError{HttpStatusCode: http.StatusForbidden, UserMessage: "Invalid request, not allow to perform operation"}
+		writeJsonResp(w, err, "", http.StatusForbidden)
+		return
+	}
+
+	handler.logger.Infow("request payload, CreateHostUrl", "payload", dto)
+	resp, err := handler.hostUrlService.CreateHostUrl(&dto)
+	if err != nil {
+		handler.logger.Errorw("service err, CreateHostUrl", "err", err, "payload", dto)
+		writeJsonResp(w, err, nil, http.StatusInternalServerError)
+		return
+	}
+	writeJsonResp(w, nil, resp, http.StatusOK)
+}
+func (handler UserAuthHandlerImpl) UpdateHostUrl(w http.ResponseWriter, r *http.Request) {
+	userId, err := handler.userService.GetLoggedInUser(r)
+	if userId == 0 || err != nil {
+		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var dto sso.HostUrlDto
+	err = decoder.Decode(&dto)
+	if err != nil {
+		handler.logger.Errorw("request err, UpdateHostUrl", "err", err, "payload", dto)
+		writeJsonResp(w, err, nil, http.StatusBadRequest)
+		return
+	}
+
+	isActionUserSuperAdmin, err := handler.userService.IsSuperAdmin(int(userId))
+	if err != nil {
+		handler.logger.Errorw("request err, UpdateHostUrl", "err", err, "userId", userId)
+		writeJsonResp(w, err, "Failed to check is super admin", http.StatusInternalServerError)
+		return
+	}
+
+	if !isActionUserSuperAdmin {
+		err = &util.ApiError{HttpStatusCode: http.StatusForbidden, UserMessage: "Invalid request, not allow to perform operation"}
+		writeJsonResp(w, err, "", http.StatusForbidden)
+		return
+	}
+
+	handler.logger.Infow("request payload, UpdateHostUrl", "payload", dto)
+	resp, err := handler.hostUrlService.UpdateHostUrl(&dto)
+	if err != nil {
+		handler.logger.Errorw("service err, UpdateHostUrl", "err", err, "payload", dto)
+		writeJsonResp(w, err, nil, http.StatusInternalServerError)
+		return
+	}
+	writeJsonResp(w, nil, resp, http.StatusOK)
+}
+
+func (handler UserAuthHandlerImpl) GetHostUrlById(w http.ResponseWriter, r *http.Request) {
+	userId, err := handler.userService.GetLoggedInUser(r)
+	if userId == 0 || err != nil {
+		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
+		return
+	}
+	isActionUserSuperAdmin, err := handler.userService.IsSuperAdmin(int(userId))
+	if err != nil {
+		handler.logger.Errorw("request err, GetHostUrlById", "err", err, "userId", userId)
+		writeJsonResp(w, err, "Failed to check is super admin", http.StatusInternalServerError)
+		return
+	}
+
+	if !isActionUserSuperAdmin {
+		err = &util.ApiError{HttpStatusCode: http.StatusForbidden, UserMessage: "Invalid request, not allow to perform operation"}
+		writeJsonResp(w, err, "", http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		writeJsonResp(w, err, "", http.StatusBadRequest)
+		return
+	}
+	res, err := handler.hostUrlService.GetById(id)
+	if err != nil {
+		handler.logger.Errorw("service err, GetHostUrlById", "err", err)
+		writeJsonResp(w, err, nil, http.StatusInternalServerError)
+		return
+	}
+	writeJsonResp(w, nil, res, http.StatusOK)
+}
+
+func (handler UserAuthHandlerImpl) GetHostUrlActive(w http.ResponseWriter, r *http.Request) {
+	userId, err := handler.userService.GetLoggedInUser(r)
+	if userId == 0 || err != nil {
+		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
+		return
+	}
+	isActionUserSuperAdmin, err := handler.userService.IsSuperAdmin(int(userId))
+	if err != nil {
+		handler.logger.Errorw("request err, GetHostUrlActive", "err", err, "userId", userId)
+		writeJsonResp(w, err, "Failed to check is super admin", http.StatusInternalServerError)
+		return
+	}
+
+	if !isActionUserSuperAdmin {
+		err = &util.ApiError{HttpStatusCode: http.StatusForbidden, UserMessage: "Invalid request, not allow to perform operation"}
+		writeJsonResp(w, err, "", http.StatusForbidden)
+		return
+	}
+
+	res, err := handler.hostUrlService.GetActive()
+	if err != nil {
+		handler.logger.Errorw("service err, GetHostUrlActive", "err", err)
 		writeJsonResp(w, err, nil, http.StatusInternalServerError)
 		return
 	}
