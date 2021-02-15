@@ -20,7 +20,6 @@ package util
 import (
 	"context"
 	"fmt"
-	"github.com/caarlos0/env"
 	"github.com/devtron-labs/devtron/internal/sql/repository"
 	"github.com/go-pg/pg"
 	"github.com/google/go-github/github"
@@ -105,10 +104,10 @@ func GetGitConfig(gitOpsRepository repository.GitOpsConfigRepository) (*GitConfi
 		return nil, err
 	} else if err == pg.ErrNoRows {
 		// adding this block for backward compatibility,TODO: remove in next  iteration
-		cfg := &GitConfig{}
-		err := env.Parse(cfg)
-		return cfg, err
-		//return &GitConfig{}, nil
+		// cfg := &GitConfig{}
+		// err := env.Parse(cfg)
+		// return cfg, err
+		return &GitConfig{}, nil
 	}
 
 	if gitOpsConfig == nil || gitOpsConfig.Id == 0 {
@@ -146,26 +145,7 @@ func NewGitLabClient(config *GitConfig, logger *zap.SugaredLogger, gitService Gi
 				return nil, err
 			}
 		}
-		/*
-			groups, res, err := git.Groups.SearchGroup(config.GitlabNamespaceName)
-			if err != nil {
-				responseStatus := 0
-				if res != nil {
-					responseStatus = res.StatusCode
 
-				}
-				logger.Warnw("error connecting to gitlab", "status code", responseStatus, "err", err.Error())
-			}
-			logger.Debugw("gitlab groups found ", "group", groups)
-			if len(groups) == 0 {
-				logger.Warn("no matching namespace found for gitlab")
-			}
-			for _, group := range groups {
-				if config.GitlabNamespaceName == group.Name {
-					config.GitlabNamespaceID = group.ID
-				}
-			}
-		*/
 		group, _, err := git.Groups.GetGroup(config.GitlabGroupId)
 		if err != nil {
 			return nil, err
