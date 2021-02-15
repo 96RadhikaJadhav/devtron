@@ -621,6 +621,10 @@ func InitializeApp() (*App, error) {
 		wire.Bind(new(gitops.GitOpsConfigService), new(*gitops.GitOpsConfigServiceImpl)),
 		repository.NewGitOpsConfigRepositoryImpl,
 		wire.Bind(new(repository.GitOpsConfigRepository), new(*repository.GitOpsConfigRepositoryImpl)),
+		sso.NewHostUrlServiceImpl,
+		wire.Bind(new(sso.HostUrlService), new(*sso.HostUrlServiceImpl)),
+		repository.NewHostUrlRepositoryImpl,
+		wire.Bind(new(repository.HostUrlRepository), new(*repository.HostUrlRepositoryImpl)),
 	)
 	return &App{}, nil
 }
