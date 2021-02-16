@@ -65,6 +65,20 @@ func (impl HostUrlServiceImpl) CreateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 	// Rollback tx on error.
 	defer tx.Rollback()
 
+	existingModel, err := impl.hostUrlRepository.FindActive()
+	if err != nil && err != pg.ErrNoRows {
+		impl.logger.Errorw("error in update new host url", "error", err)
+		return nil, err
+	}
+	if existingModel != nil && existingModel.Id > 0 {
+		existingModel.Active = false
+		err = impl.hostUrlRepository.Update(existingModel, tx)
+		if err != nil {
+			impl.logger.Errorw("error in creating new host url", "error", err)
+			return nil, err
+		}
+	}
+
 	model := &repository.HostUrl{
 		Url: request.Url,
 	}
