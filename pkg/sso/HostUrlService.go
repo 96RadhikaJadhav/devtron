@@ -126,7 +126,7 @@ func (impl HostUrlServiceImpl) UpdateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 	model.UpdatedBy = request.UserId
 	model.CreatedOn = time.Now()
 	model.UpdatedOn = time.Now()
-	_, err = impl.hostUrlRepository.Save(model, tx)
+	err = impl.hostUrlRepository.Update(model, tx)
 	if err != nil {
 		impl.logger.Errorw("error in creating new host url", "error", err)
 		return nil, err
