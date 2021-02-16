@@ -58,7 +58,7 @@ func (repo HostUrlRepositoryImpl) Save(model *HostUrl, tx *pg.Tx) (*HostUrl, err
 }
 
 func (repo HostUrlRepositoryImpl) Update(model *HostUrl, tx *pg.Tx) error {
-	err := tx.Insert(model)
+	err := tx.Update(model)
 	return err
 }
 
