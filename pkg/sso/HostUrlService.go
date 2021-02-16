@@ -29,13 +29,14 @@ type HostUrlService interface {
 	CreateHostUrl(request *HostUrlDto) (*HostUrlDto, error)
 	UpdateHostUrl(request *HostUrlDto) (*HostUrlDto, error)
 	GetById(id int) (*HostUrlDto, error)
-	GetActive() (*HostUrlDto, error)
-	GetByUrl(url string) (*HostUrlDto, error)
+	GetActiveList() ([]*HostUrlDto, error)
+	GetByKey(key string) (*HostUrlDto, error)
 }
 
 type HostUrlDto struct {
 	Id     int    `json:"id"`
-	Url    string `json:"url,omitempty"`
+	Key    string `json:"key,omitempty"`
+	Value  string `json:"value,omitempty"`
 	Active bool   `json:"active"`
 	UserId int32  `json:"-"`
 }
@@ -65,7 +66,7 @@ func (impl HostUrlServiceImpl) CreateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 	// Rollback tx on error.
 	defer tx.Rollback()
 
-	existingModel, err := impl.hostUrlRepository.FindActive()
+	existingModel, err := impl.hostUrlRepository.FindByKey(request.Key)
 	if err != nil && err != pg.ErrNoRows {
 		impl.logger.Errorw("error in update new host url", "error", err)
 		return nil, err
@@ -80,7 +81,8 @@ func (impl HostUrlServiceImpl) CreateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 	}
 
 	model := &repository.HostUrl{
-		Url: request.Url,
+		Key:   request.Key,
+		Value: request.Value,
 	}
 	model.Active = true
 	model.CreatedBy = request.UserId
@@ -116,7 +118,8 @@ func (impl HostUrlServiceImpl) UpdateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 	}
 
 	model = &repository.HostUrl{
-		Url: request.Url,
+		Key:   request.Key,
+		Value: request.Value,
 	}
 	model.Active = true
 	model.CreatedBy = request.UserId
@@ -134,7 +137,6 @@ func (impl HostUrlServiceImpl) UpdateHostUrl(request *HostUrlDto) (*HostUrlDto, 
 		return nil, err
 	}
 	return request, nil
-
 }
 
 func (impl HostUrlServiceImpl) GetById(id int) (*HostUrlDto, error) {
@@ -149,41 +151,48 @@ func (impl HostUrlServiceImpl) GetById(id int) (*HostUrlDto, error) {
 	ssoLoginDto := &HostUrlDto{
 		Id:     model.Id,
 		Active: model.Active,
-		Url:    model.Url,
+		Key:    model.Key,
+		Value:  model.Value,
 	}
 	return ssoLoginDto, nil
 }
 
-func (impl HostUrlServiceImpl) GetActive() (*HostUrlDto, error) {
-	model, err := impl.hostUrlRepository.FindActive()
+func (impl HostUrlServiceImpl) GetActiveList() ([]*HostUrlDto, error) {
+	models, err := impl.hostUrlRepository.FindActive()
 	if err != nil && err != pg.ErrNoRows {
-		impl.logger.Errorw("error in update new host url", "error", err)
+		impl.logger.Errorw("error", "error", err)
 		return nil, err
 	}
 	if err == pg.ErrNoRows {
 		return nil, nil
 	}
-	ssoLoginDto := &HostUrlDto{
-		Id:     model.Id,
-		Active: model.Active,
-		Url:    model.Url,
+	results := make([]*HostUrlDto, 0)
+	for _, model := range models {
+		dto := &HostUrlDto{
+			Id:     model.Id,
+			Active: model.Active,
+			Key:    model.Key,
+			Value:  model.Value,
+		}
+		results = append(results, dto)
 	}
-	return ssoLoginDto, nil
+	return results, nil
 }
 
-func (impl HostUrlServiceImpl) GetByUrl(url string) (*HostUrlDto, error) {
-	model, err := impl.hostUrlRepository.FindByUrl(url)
+func (impl HostUrlServiceImpl) GetByKey(key string) (*HostUrlDto, error) {
+	model, err := impl.hostUrlRepository.FindByKey(key)
 	if err != nil && err != pg.ErrNoRows {
-		impl.logger.Errorw("error in update new host url", "error", err)
+		impl.logger.Errorw("error", "error", err)
 		return nil, err
 	}
 	if err == pg.ErrNoRows {
 		return nil, nil
 	}
-	ssoLoginDto := &HostUrlDto{
+	dto := &HostUrlDto{
 		Id:     model.Id,
 		Active: model.Active,
-		Url:    model.Url,
+		Key:    model.Key,
+		Value:  model.Value,
 	}
-	return ssoLoginDto, nil
+	return dto, nil
 }
