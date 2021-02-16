@@ -68,11 +68,11 @@ type UserAuthHandler interface {
 	GetSSOLoginConfig(w http.ResponseWriter, r *http.Request)
 	GetSSOLoginConfigByName(w http.ResponseWriter, r *http.Request)
 
-
 	CreateHostUrl(w http.ResponseWriter, r *http.Request)
 	UpdateHostUrl(w http.ResponseWriter, r *http.Request)
 	GetHostUrlById(w http.ResponseWriter, r *http.Request)
-	GetHostUrlActive(w http.ResponseWriter, r *http.Request)
+	GetHostUrlActiveList(w http.ResponseWriter, r *http.Request)
+	GetHostByKey(w http.ResponseWriter, r *http.Request)
 }
 
 type UserAuthHandlerImpl struct {
@@ -760,7 +760,7 @@ func (handler UserAuthHandlerImpl) GetHostUrlById(w http.ResponseWriter, r *http
 	writeJsonResp(w, nil, res, http.StatusOK)
 }
 
-func (handler UserAuthHandlerImpl) GetHostUrlActive(w http.ResponseWriter, r *http.Request) {
+func (handler UserAuthHandlerImpl) GetHostUrlActiveList(w http.ResponseWriter, r *http.Request) {
 	userId, err := handler.userService.GetLoggedInUser(r)
 	if userId == 0 || err != nil {
 		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
@@ -779,9 +779,39 @@ func (handler UserAuthHandlerImpl) GetHostUrlActive(w http.ResponseWriter, r *ht
 		return
 	}
 
-	res, err := handler.hostUrlService.GetActive()
+	res, err := handler.hostUrlService.GetActiveList()
 	if err != nil {
 		handler.logger.Errorw("service err, GetHostUrlActive", "err", err)
+		writeJsonResp(w, err, nil, http.StatusInternalServerError)
+		return
+	}
+	writeJsonResp(w, nil, res, http.StatusOK)
+}
+
+func (handler UserAuthHandlerImpl) GetHostByKey(w http.ResponseWriter, r *http.Request) {
+	userId, err := handler.userService.GetLoggedInUser(r)
+	if userId == 0 || err != nil {
+		writeJsonResp(w, err, "Unauthorized User", http.StatusUnauthorized)
+		return
+	}
+	isActionUserSuperAdmin, err := handler.userService.IsSuperAdmin(int(userId))
+	if err != nil {
+		handler.logger.Errorw("request err, GetHostUrlById", "err", err, "userId", userId)
+		writeJsonResp(w, err, "Failed to check is super admin", http.StatusInternalServerError)
+		return
+	}
+
+	if !isActionUserSuperAdmin {
+		err = &util.ApiError{HttpStatusCode: http.StatusForbidden, UserMessage: "Invalid request, not allow to perform operation"}
+		writeJsonResp(w, err, "", http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	key:= vars["key"]
+	res, err := handler.hostUrlService.GetByKey(key)
+	if err != nil {
+		handler.logger.Errorw("service err, GetHostUrlById", "err", err)
 		writeJsonResp(w, err, nil, http.StatusInternalServerError)
 		return
 	}

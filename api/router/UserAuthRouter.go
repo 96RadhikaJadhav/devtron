@@ -139,11 +139,12 @@ func (router UserAuthRouterImpl) initUserAuthRouter(userAuthRouter *mux.Router) 
 		HandlerFunc(router.userAuthHandler.CreateHostUrl).Methods("POST")
 	userAuthRouter.Path("/hosturl/update").
 		HandlerFunc(router.userAuthHandler.UpdateHostUrl).Methods("PUT")
-	userAuthRouter.Path("/hosturl/active/").
-		HandlerFunc(router.userAuthHandler.GetHostUrlActive).Methods("GET")
+	userAuthRouter.Path("/hosturl").Queries("key", "{key}").
+		HandlerFunc(router.userAuthHandler.GetHostByKey).Methods("GET")
 	userAuthRouter.Path("/hosturl/{id}").
 		HandlerFunc(router.userAuthHandler.GetHostUrlById).Methods("GET")
-
+	userAuthRouter.Path("/hosturl/active/list").
+		HandlerFunc(router.userAuthHandler.GetHostUrlActiveList).Methods("GET")
 }
 
 func (router UserAuthRouterImpl) writeSuccess(message string, w http.ResponseWriter) {

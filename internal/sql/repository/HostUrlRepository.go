@@ -23,9 +23,10 @@ import (
 )
 
 type HostUrl struct {
-	tableName struct{} `sql:"host_url" pg:",discard_unknown_columns"`
+	tableName struct{} `sql:"attributes" pg:",discard_unknown_columns"`
 	Id        int      `sql:"id,pk"`
-	Url       string   `sql:"url,notnull"`
+	Key       string   `sql:"key,notnull"`
+	Value     string   `sql:"value,notnull"`
 	Active    bool     `sql:"active, notnull"`
 	models.AuditLog
 }
@@ -33,9 +34,9 @@ type HostUrl struct {
 type HostUrlRepository interface {
 	Save(model *HostUrl, tx *pg.Tx) (*HostUrl, error)
 	Update(model *HostUrl, tx *pg.Tx) error
-	FindByUrl(url string) (*HostUrl, error)
+	FindByKey(key string) (*HostUrl, error)
 	FindById(id int) (*HostUrl, error)
-	FindActive() (*HostUrl, error)
+	FindActive() ([]*HostUrl, error)
 	GetConnection() (dbConnection *pg.DB)
 }
 
@@ -51,7 +52,6 @@ func (impl *HostUrlRepositoryImpl) GetConnection() (dbConnection *pg.DB) {
 	return impl.dbConnection
 }
 
-
 func (repo HostUrlRepositoryImpl) Save(model *HostUrl, tx *pg.Tx) (*HostUrl, error) {
 	err := tx.Insert(model)
 	return model, err
@@ -62,9 +62,9 @@ func (repo HostUrlRepositoryImpl) Update(model *HostUrl, tx *pg.Tx) error {
 	return err
 }
 
-func (repo HostUrlRepositoryImpl) FindByUrl(url string) (*HostUrl, error) {
+func (repo HostUrlRepositoryImpl) FindByKey(key string) (*HostUrl, error) {
 	model := &HostUrl{}
-	err := repo.dbConnection.Model(model).Where("url = ?", url).Where("active = ?", true).
+	err := repo.dbConnection.Model(model).Where("key = ?", key).Where("active = ?", true).
 		Select()
 	return model, err
 }
@@ -76,9 +76,9 @@ func (repo HostUrlRepositoryImpl) FindById(id int) (*HostUrl, error) {
 	return model, err
 }
 
-func (repo HostUrlRepositoryImpl) FindActive() (*HostUrl, error) {
-	model := &HostUrl{}
-	err := repo.dbConnection.Model(model).Where("active = ?", true).
+func (repo HostUrlRepositoryImpl) FindActive() ([]*HostUrl, error) {
+	var models []*HostUrl
+	err := repo.dbConnection.Model(models).Where("active = ?", true).
 		Select()
-	return model, err
+	return models, err
 }
